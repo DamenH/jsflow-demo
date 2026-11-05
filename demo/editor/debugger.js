@@ -8,6 +8,7 @@ import { DefineFFF } from '/opt/jsflow/out/Define';
 import { Value } from '/opt/jsflow/out/Value';
 import { bot, le, lub } from '/opt/jsflow/out/Label';
 import { ToString } from '/opt/jsflow/out/Conversion/ToString';
+import { ToNumber } from '/opt/jsflow/out/Conversion/ToNumber';
 import { Task } from '/opt/jsflow/out/Engine/Task';
 import { Result } from '/opt/jsflow/out/Result';
 
@@ -15,6 +16,7 @@ const send = message => self.postMessage(message);
 const boundaryTypes = new Set(['VariableDeclaration','ExpressionStatement','IfStatement','WhileStatement','DoWhileStatement','ForStatement','ForInStatement','ReturnStatement','ThrowStatement','TryStatement','SwitchStatement','WithStatement','BreakStatement','ContinueStatement','DebuggerStatement']);
 let engine, breakpoints = new Set(), current = null, state = 'idle', steps = 0, busy = false, baseline, output = [], diagnostics = [], runnable = [], timer;
 let callbacks = [], registrations = 0, phase = 'main script', callbackCount = 0;
+function timerDelay(value) { return Math.min(2000,Math.max(0,Number.isFinite(value)?Math.trunc(value):0)); }
 function preview(value) {
   if (value === undefined) return 'undefined';
   if (value === null) return 'null';
@@ -55,8 +57,8 @@ function locals() {
   }
   return result;
 }
-function snapshot(reason, error) {
-  send({type:'state',state,reason,line:current?.loc?.start.line || null,column:current?.loc?.start.column || 0,pc:engine ? String(engine.context.effectivePC) : '<>',variables:engine ? locals() : [],output:[...output],diagnostics:[...diagnostics],steps,lines:runnable,phase,pendingCallbacks:callbacks.length,error});
+function snapshot(reason, error, waitMs) {
+  send({type:'state',state,reason,line:current?.loc?.start.line || null,column:current?.loc?.start.column || 0,pc:engine ? String(engine.context.effectivePC) : '<>',variables:engine ? locals() : [],output:[...output],diagnostics:[...diagnostics],steps,lines:runnable,phase,pendingCallbacks:callbacks.length,waitMs,error});
 }
 function boundary() {
   if (!engine.running() || engine.context.result.type !== 'normal') return null;
@@ -79,7 +81,7 @@ function finish() {
   if (result.type === 'throw') return fail(result.value);
   current = null; snapshot('completed');
 }
-// The demo's FIFO async API model. The interpreter still executes each callback.
+// Timer host adapter. Callback bodies still execute in the unchanged interpreter.
 class DeferredEnd extends Task {
   constructor(root) { super(Task.runfor_all); this.root = root; }
   Execute() {
@@ -107,8 +109,14 @@ function advance(mode, skipCurrent) {
         if (performance.now()-started > 5000) throw new Error('Execution timed out (5 seconds).');
         if (!engine.running()) {
           if (engine.context.result.type === 'throw' || !callbacks.length) return finish();
+          callbacks.sort((a,b)=>a.due-b.due || a.id-b.id);
+          const remaining=callbacks[0].due-performance.now();
+          if (remaining>0) {
+            state='waiting';current=null;snapshot('timer',undefined,Math.ceil(remaining));
+            timer=setTimeout(()=>{state='running';chunk();},remaining);return;
+          }
           dispatchCallback();
-          // A separate host turn: main script has finished before the callback.
+          // Timer callbacks run only after the current interpreted task has drained.
           skip = false; timer = setTimeout(chunk,0); return;
         }
         const next = boundary();
@@ -142,19 +150,23 @@ self.onmessage = ({data}) => {
       const result = [], log = [], queue = [];
       let scheduled = 0;
       const complete = error => send({type:'native',output:result,diagnostics:log,error:error ? String(error) : undefined});
-      const defer = (callback,value) => {
-        if (typeof callback !== 'function') throw new TypeError('defer expects a callback function');
-        if (++scheduled > 100) throw new Error('Callback limit reached (100 registrations).');
-        queue.push(()=>callback(value));
+      const schedule = (callback,delay,...args) => {
+        if (typeof callback !== 'function') throw new TypeError('setTimeout expects a callback function');
+        if (++scheduled > 100) throw new Error('Timer limit reached (100 registrations).');
+        queue.push({callback:()=>callback(...args),due:performance.now()+timerDelay(Number(delay)),id:scheduled});
+        return scheduled;
       };
       function drain() {
         try {
           if (!queue.length) return complete();
-          queue.shift()(); setTimeout(drain,0);
+          queue.sort((a,b)=>a.due-b.due || a.id-b.id);
+          const remaining=queue[0].due-performance.now();
+          if (remaining>0) return setTimeout(drain,remaining);
+          queue.shift().callback(); setTimeout(drain,0);
         } catch (error) { complete(error); }
       }
       try {
-        new Function('lbl','publicOutput','checkpoint','print','defer',data.code)(value=>value,value=>append(result,value),()=>{},value=>append(log,value),defer);
+        new Function('lbl','publicOutput','checkpoint','print','setTimeout',data.code)(value=>value,value=>append(result,value),()=>{},value=>append(log,value),schedule);
         setTimeout(drain,0);
       } catch (error) { complete(error); }
       return;
@@ -170,14 +182,16 @@ self.onmessage = ({data}) => {
         append(output,value.value); return new Value(undefined,bot);
       });
       builtin('checkpoint',2,()=>new Value(undefined,bot));
-      builtin('defer',2,(_,args)=>{
+      builtin('setTimeout',2,(_,args)=>{
         const callback = args[0];
         if (!callback || !callback.value || typeof callback.value.AsyncCall !== 'function') {
-          engine.Throw('TypeError','defer expects an interpreted callback function',bot);
+          engine.Throw('TypeError','setTimeout expects an interpreted callback function',bot);
         }
-        if (++registrations > 100) throw new Error('Callback limit reached (100 registrations).');
-        callbacks.push({callback:callback.clone(),args:[(args[1] || new Value(undefined,bot)).clone()],context:lub(engine.context.effectivePC,callback.label)});
-        return new Value(undefined,bot);
+        const delay=ToNumber(args[1] || new Value(0,bot));
+        if (++registrations > 100) engine.fatal('Timer limit reached (100 registrations).');
+        const context=lub(engine.context.effectivePC,callback.label,delay.label);
+        callbacks.push({callback:callback.clone(),args:args.slice(2).map(value=>value.clone()),context,due:performance.now()+timerDelay(delay.value),id:registrations});
+        return new Value(registrations,context);
       });
       baseline = new Set(Object.getOwnPropertyNames(engine.GlobalObject.properties));
       engine.debug.active = true;

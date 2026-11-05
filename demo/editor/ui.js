@@ -19,7 +19,7 @@ function createWorker(name) {
 self.MonacoEnvironment = {getWorker:(_,label)=>createWorker(['typescript','javascript'].includes(label)?'ts':'editor')};
 const $ = id=>document.getElementById(id);
 typescript.javascriptDefaults.setCompilerOptions({target:typescript.ScriptTarget.ES5,allowJs:true,checkJs:true,noEmit:true});
-typescript.javascriptDefaults.addExtraLib('declare function lbl<T>(value: T, ...labels: string[]): T;\ndeclare function publicOutput(value: any): void;\ndeclare function checkpoint(name: string, value: any): void;\ndeclare function print(value: any): void;\ndeclare function defer<T>(callback: (value: T) => void, value?: T): void;','ts:jsflow.d.ts');
+typescript.javascriptDefaults.addExtraLib('declare function lbl<T>(value: T, ...labels: string[]): T;\ndeclare function publicOutput(value: any): void;\ndeclare function checkpoint(name: string, value: any): void;\ndeclare function print(value: any): void;\ndeclare function setTimeout(callback: (...args: any[]) => void, delay?: number, ...args: any[]): number;','ts:jsflow.d.ts');
 monaco.editor.defineTheme('plain',{base:'vs',inherit:true,rules:[],colors:{'editor.background':'#fafafa','editor.lineHighlightBackground':'#f0f2f4','editorLineNumber.foreground':'#8a8f97','editorGutter.background':'#fafafa'}});
 typescript.javascriptDefaults.setEagerModelSync(true);
 const model=monaco.editor.createModel('','javascript',monaco.Uri.parse('file:///editor.js'));
@@ -43,7 +43,7 @@ monaco.languages.registerHoverProvider('javascript',{provideHover:hoverInfo});
 function template(id){return program(scenarios.find(item=>item.id===id),'polar/otter?key=42',true).split('\n').filter(line=>!line.includes('checkpoint(')).join('\n');}
 for(const scenario of scenarios){const option=document.createElement('option');option.value=scenario.id;option.textContent=scenario.tag+' — '+scenario.title;$('examples').append(option);}
 function setText(id,text){$(id).textContent=text;}
-function buttons(){const paused=state==='paused',running=state==='running';$('continue').disabled=!paused;$('stop').disabled=!worker;$('step').disabled=running;$('run').disabled=running;$('debug').disabled=running;}
+function buttons(){const paused=state==='paused',running=state==='running'||state==='waiting';$('continue').disabled=!paused;$('stop').disabled=!worker;$('step').disabled=running;$('run').disabled=running;$('debug').disabled=running;}
 function message(text,tone=''){setText('status',text);$('status').className=tone;}
 function decorations(){
  breakpointDecorations=editor.deltaDecorations(breakpointDecorations,[...breakpoints].map(line=>({range:new monaco.Range(line,1,line,1),options:{glyphMarginClassName:'breakpoint-glyph',glyphMarginHoverMessage:{value:'Breakpoint: line '+line}}})));
@@ -69,7 +69,7 @@ editor.onMouseDown(event=>{
 function renderBreakpoints(){setText('breakpoint-list',breakpoints.size?[...breakpoints].sort((a,b)=>a-b).join(', '):'None. Click the gutter beside a line number.');}
 function inspect(data){
  state=data.state;currentLine=data.line;clearTimeout(watchdog);trackedVariables=new Map(data.variables.map(variable=>[variable.name,variable]));trackedPC=data.pc;hoverAvailable=true;
- const title=state==='paused'?'Paused before line '+data.line+' · '+(data.reason==='breakpoint'?'breakpoint':'step'):state==='blocked'?'Blocked by JSFlow':state==='completed'?'Completed':state==='error'?'Execution error':state;
+ const title=state==='paused'?'Paused before line '+data.line+' · '+(data.reason==='breakpoint'?'breakpoint':'step'):state==='blocked'?'Blocked by JSFlow':state==='completed'?'Completed':state==='error'?'Execution error':state==='waiting'?'Waiting for callback (~'+data.waitMs+' ms)':state;
  message(title,['blocked','error'].includes(state)?'error':state==='paused'?'paused':'');
  setText('scope-info',data.phase+' · '+data.pendingCallbacks+' callback'+(data.pendingCallbacks===1?'':'s')+' queued');
  setText('pc',data.pc);$('pc').className=data.pc==='<T>'?'secret':'';
@@ -80,7 +80,7 @@ function inspect(data){
  setText('public-output',data.output.length?data.output.join('\n'):'No output.');setText('diagnostics',data.diagnostics.length?data.diagnostics.join('\n'):'No diagnostic output.');
  setText('error',data.error?data.error.type+': '+data.error.message:'');setText('steps',data.steps+' internal steps');
  decorations();if(currentLine)editor.revealLineInCenterIfOutsideViewport(currentLine);
- if(['blocked','completed','error'].includes(state))terminate();buttons();
+ if(['blocked','completed','error'].includes(state))terminate();else if(state==='waiting')watch();buttons();
 }
 function watch(){clearTimeout(watchdog);watchdog=setTimeout(()=>{stop();message('Execution timed out','error');setText('error','The worker was stopped after 6 seconds.');},6000);}
 function start(pauseOnEntry=false){
@@ -94,7 +94,7 @@ function compare(){
  setText('native-output','Running ordinary JavaScript…');
  nativeWorker=createWorker('jsflow');nativeWorker.onmessage=({data})=>{if(data.type!=='native')return;clearTimeout(nativeTimeout);setText('native-output',(data.output.length?data.output.join('\n'):'No public output.')+(data.error?'\n'+data.error:''));nativeWorker.terminate();nativeWorker=null;};
  nativeWorker.onerror=event=>{clearTimeout(nativeTimeout);setText('native-output',event.message);nativeWorker?.terminate();nativeWorker=null;};
- nativeWorker.postMessage({type:'native',code:editor.getValue()});nativeTimeout=setTimeout(()=>{nativeWorker?.terminate();nativeWorker=null;setText('native-output','Execution timed out. Worker stopped.');},2000);
+ nativeWorker.postMessage({type:'native',code:editor.getValue()});nativeTimeout=setTimeout(()=>{nativeWorker?.terminate();nativeWorker=null;setText('native-output','Execution timed out. Worker stopped.');},6000);
 }
 $('run').onclick=()=>start();$('debug').onclick=()=>start(true);$('continue').onclick=()=>advance('continue');$('step').onclick=()=>advance('step');$('stop').onclick=stop;
 $('reset').onclick=()=>{loadExample(true);renderBreakpoints();};$('examples').onchange=()=>{loadExample();renderBreakpoints();};$('compare').onclick=compare;

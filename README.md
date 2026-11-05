@@ -7,7 +7,7 @@ hover inspection of variable values, security labels, and execution context.
 The authors' interpreter runs in a browser worker. The site has no execution
 backend and never sends edited programs to a server. Nine examples include
 explicit and implicit flows, conservative rejection, callbacks, and queued
-callback delivery through the demo's `defer(callback, value)` API model.
+callback delivery through an inline `defer` helper and a bounded timer adapter.
 
 ## Build
 
@@ -29,9 +29,15 @@ The upstream source is vendored unchanged at the commit recorded in
 licensed. Built assets include JSFlow and Monaco license files.
 
 `publicOutput` is a demo sink that checks the value and effective context labels.
-`print` is a trusted diagnostic. `defer` is a bounded FIFO teaching API model that
-retains registration context and argument labels; it is not a native timer or a
-full browser event loop. The interpreted language is non-strict ES5.
+`print` is a trusted diagnostic. The examples define `defer(callback, value)`
+inline, choosing a random 500–1499 ms delay using JSFlow's Math API and calling
+`setTimeout`. A timer host adapter waits in real time, then resumes the actual
+interpreted callback. It retains scheduling context, delay/function labels, and
+callback argument labels. Delays are clamped to 0–2000 ms; timers accept function
+callbacks and optional arguments, without cancellation or string callbacks.
+The interpreted language is non-strict ES5; promises and async/await are not
+provided. This is a teaching API model, not a complete browser event loop or a
+guarantee about timing channels.
 
 Static hosting cannot attach custom response headers to individual workers, so
 workers start through Blob bootstraps and inherit the page's Content Security
