@@ -1,0 +1,21 @@
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const assert=require('node:assert/strict');
+(async()=>{const browser=await chromium.launch();try{
+ const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto(process.argv[2] || 'http://127.0.0.1:8766');
+ const paused=async line=>page.waitForFunction(line=>window.jsflowDemo?.state==='paused'&&document.querySelector('#status').textContent.includes('line '+line+' ·'),line);
+ const done=async()=>page.waitForFunction(()=>['completed','blocked','error'].includes(window.jsflowDemo.state));
+ const variable=async name=>page.locator('#variables tr').evaluateAll((rows,name)=>{const row=rows.find(r=>r.cells[0]?.textContent===name);return row?{value:row.cells[1].textContent,label:row.cells[2].textContent}:null;},name);
+ const select=async id=>{await page.locator('#examples').selectOption(id);await paused(1)};
+ const edit=async code=>{await page.evaluate(code=>window.jsflowDemo.editor.setValue(code),code);await page.evaluate(()=>window.jsflowDemo.setBreakpoints([]));await page.locator('#debug').click();await paused(1)};
+ await paused(1);await select('callback');await page.evaluate(()=>window.jsflowDemo.setBreakpoints([8]));await page.locator('#continue').click();await paused(8);assert.equal((await variable('result')).label,'<T>');await page.locator('#step').click();await done();assert.equal(await page.evaluate(()=>window.jsflowDemo.state),'blocked');
+ await select('deferred');await page.evaluate(()=>window.jsflowDemo.setBreakpoints([4]));await page.locator('#continue').click();await paused(4);
+ assert.equal(await page.locator('#public-output').innerText(),'Main script finished');assert.equal((await variable('value')).label,'<T>');assert.equal(await page.locator('#pc').innerText(),'<>');assert.match(await page.locator('#scope-info').innerText(),/callback #1/);
+ await page.locator('#step').click();await done();assert.match(await page.locator('#error').innerText(),/value <T>, context <>/);
+ await page.evaluate(()=>document.querySelector('#compare').click());await page.waitForFunction(()=>document.querySelector('#native-output').textContent.includes('Main script finished\npolar/otter?key=42'));
+ await select('deferred-control');await page.evaluate(()=>window.jsflowDemo.setBreakpoints([5]));await page.locator('#continue').click();await paused(5);assert.equal(await page.locator('#pc').innerText(),'<T>');assert.equal(await page.locator('#public-output').innerText(),'Main script finished');await page.locator('#step').click();await done();assert.match(await page.locator('#error').innerText(),/value <>, context <T>/);
+ const source=await page.evaluate(()=>window.jsflowDemo.editor.getValue());await edit(source.replace('lbl(true)','lbl(false)'));await page.locator('#continue').click();await done();assert.equal(await page.evaluate(()=>window.jsflowDemo.state),'completed');
+ await edit('var secret = lbl(17);\ndefer(function later(value) {\n print(value);\n publicOutput("callback done");\n}, secret);\npublicOutput("main done");');await page.locator('#continue').click();await done();assert.equal(await page.evaluate(()=>window.jsflowDemo.state),'completed');assert.equal(await page.locator('#public-output').innerText(),'main done\ncallback done');assert.match(await page.locator('#diagnostics').textContent(),/'17'_<T>/);
+ await edit('defer(function first() { defer(function last() { publicOutput("last"); }); publicOutput("first"); return 17; });\ndefer(function second() { publicOutput("second"); });\npublicOutput("main");');await page.locator('#continue').click();await done();assert.equal(await page.evaluate(()=>window.jsflowDemo.state),'completed');assert.equal(await page.locator('#public-output').innerText(),'main\nfirst\nsecond\nlast');
+ assert.deepEqual(errors,[]);console.log('PASS callback parameter labels, later delivery, registration context, branch not taken, allowed private callback, nested FIFO order, ignored callback return, native comparison, breakpoints inside callbacks.');
+}finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});

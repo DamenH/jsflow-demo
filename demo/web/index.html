@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:; connect-src 'none'; font-src 'self' data:; object-src 'none'; base-uri 'self'">
+<title>JSFlow debugger</title>
+<link rel="stylesheet" href="./style.css"><link rel="stylesheet" href="./assets/app.css?v=__BUILD_ID__">
+<script src="./assets/app.js?v=__BUILD_ID__" type="module"></script>
+</head>
+<body class="present">
+<main>
+<header><h1>JSFlow debugger</h1></header>
+<div class="examples"><label for="examples">Example</label><select id="examples"></select><button id="reset">Reset example</button></div>
+<div class="toolbar" role="toolbar" aria-label="Debugger controls"><button id="step" class="primary">Step <kbd>F10</kbd></button><button id="continue">Continue <kbd>F5</kbd></button><button id="debug">Restart</button><button id="run">Run from start</button><button id="stop">Stop</button><span id="status" role="status">Loading editor…</span></div>
+<div class="workspace">
+<section class="source"><div class="section-heading"><h2>editor.js</h2><span id="file-state">Example</span></div><div id="editor"></div></section>
+<aside>
+<section><div class="section-heading"><h2>Variables</h2><span>Context <code id="pc">—</code></span></div><p id="scope-info" class="legend">Main script</p><table><thead><tr><th>Name</th><th>Value</th><th>Label</th></tr></thead><tbody id="variables"></tbody></table></section>
+<section><div class="section-heading"><h2>Public output</h2></div><pre id="public-output">No output.</pre><pre id="error" role="alert"></pre></section>
+
+</aside>
+</div>
+<div hidden>
+<details><summary>Diagnostic print output</summary><pre id="diagnostics">No diagnostic output.</pre><p>Trusted debug output may display secrets.</p></details>
+<details open><summary>Breakpoints</summary><p id="breakpoint-list">None.</p><button id="clear-breakpoints">Clear breakpoints</button><p>Stops before an executable statement on that line. Blank lines and comments do not pause execution.</p></details>
+<details><summary>Ordinary JavaScript comparison</summary><p>Runs the edited source in a separate browser worker, with <code>lbl</code> as identity and no information-flow checks.</p><button id="compare">Run comparison</button><pre id="native-output">Not run.</pre></details>
+<p id="lesson" class="lesson"></p>
+<footer><span>Actual JSFlow execution in your browser. Source stays in this tab.</span><span id="steps">0 internal steps</span><a href="https://github.com/jsflow/jsflow" target="_blank" rel="noreferrer">Interpreter source</a></footer>
+<details class="about"><summary>About this debugger</summary><p>The unchanged authors’ JSFlow interpreter (2021 commit) runs in a Web Worker. Step advances its real work list to the next statement; breakpoints pause before that statement executes, including on repeated loop iterations. The variables and hover data come from the current JSFlow environment. Object previews read internal data descriptors and do not invoke getters. This is a teaching adapter, not a reproduction of the 2016 paper’s evaluation.</p><p><code>publicOutput(value)</code> is our public sink: it rejects secret values or a secret execution context. <code>print(value)</code> is trusted diagnostic output. The interpreter supports non-strict ES5; browser DOM, network and Node modules are unavailable to interpreted programs. The server serves static files only. The demo’s <code>defer(callback, value)</code> adapter runs a FIFO callback queue after the main script, preserving argument labels and the registration context. It models asynchronous delivery, not real-time delays or the browser event loop. Native timers, promises, and async/await are not provided. Long runs can be stopped; workers have execution and output limits. Some synchronous built-in calls cannot pause internally.</p></details>
+</div>
+</main>
+</body>
+</html>

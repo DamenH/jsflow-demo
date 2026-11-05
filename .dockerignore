@@ -1,0 +1,16 @@
+**
+!Dockerfile
+!vendor/
+!vendor/jsflow/
+!vendor/jsflow/package.json
+!vendor/jsflow/package-lock.json
+!vendor/jsflow/tsconfig.json
+!vendor/jsflow/LICENSE
+!vendor/jsflow/src/**
+!vendor/jsflow/policies/**
+!demo/
+!demo/**
+demo/results/
+
+demo/editor/node_modules/
+demo/editor/dist/

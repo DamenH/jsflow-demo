@@ -1,0 +1,1 @@
+publicOutput('Hello, public world');

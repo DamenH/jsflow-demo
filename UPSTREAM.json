@@ -1,0 +1,6 @@
+{
+  "repository": "https://github.com/jsflow/jsflow",
+  "commit": "135b1e48e1c191b3b2939e72731752e7632eccd5",
+  "source": "vendor/jsflow",
+  "changes": "None; browser embedding and teaching API adapters are in demo/editor."
+}
