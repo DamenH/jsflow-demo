@@ -12,6 +12,17 @@ const scenarios = [
   {"id": "deferred-control", "title": "Schedule under secret control", "tag": "Timer implicit flow", "question": "Can scheduling a callback reveal one private bit?", "lesson": "The inline helper uses a timer. The timer model retains the scheduling context, so a callback scheduled under secret control cannot publish a public constant.", "body": "function defer(callback, value) {\n    var delay = 500 + Math.floor(Math.random() * 1000);\n    setTimeout(function () {\n        callback(value);\n    }, delay);\n}\nif (isMember) {\n    defer(function announce() {\n        publicOutput('Member callback ran');\n    });\n}\npublicOutput('Main script finished');"}
 
 ];
+if (teachingOptions.upgradeDisclosure) {
+  scenarios.splice(scenarios.findIndex(scenario => scenario.id === 'repaired') + 1, 0, {
+    id: 'repaired-disclosure',
+    title: 'The upgraded result is still private',
+    tag: 'Upgrade and disclosure',
+    question: 'Does prelabeling grant permission to publish the result?',
+    lesson: 'Compare the three examples: the public destination rejects the assignment; prelabeling permits private computation; publishing the resulting secret is still rejected. The public page-view message goes through before that rejection.',
+    body: "var result = lbl(0);\nif (isMember) {\n    result = 1;\n}\npublicOutput('Page view recorded');\npublicOutput(result);",
+  });
+}
+
 if (teachingOptions.libraryModel) {
   scenarios.splice(scenarios.findIndex(scenario => scenario.id === 'callback') + 1, 0, {
     id: 'library-model',
