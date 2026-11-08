@@ -13,6 +13,7 @@ RUN npm ci --no-audit --no-fund
 COPY --from=interpreter /opt/jsflow /opt/jsflow
 COPY demo/editor ./
 COPY demo/scenarios.js /browser/scenarios.js
+COPY demo/teaching-options.js /browser/teaching-options.js
 COPY demo/web/index.html /browser/web/index.html
 RUN node build.js
 

@@ -1,7 +1,7 @@
 const esbuild = require('esbuild');
 const fs = require('fs');
 const crypto = require('crypto');
-const buildID = crypto.createHash('sha256').update(['ui.js','debugger.js','build.js','package-lock.json','../scenarios.js','../web/index.html','/opt/jsflow/package-lock.json'].map(file=>fs.readFileSync(file)).join('')).digest('hex').slice(0,16);
+const buildID = crypto.createHash('sha256').update(['ui.js','debugger.js','build.js','package-lock.json','../scenarios.js','../teaching-options.js','../web/index.html','/opt/jsflow/package-lock.json'].map(file=>fs.readFileSync(file)).join('')).digest('hex').slice(0,16);
 const common = {bundle:true, minify:true, target:'es2020', outdir:'dist', nodePaths:['/opt/jsflow/node_modules'], loader:{'.ttf':'file'}, assetNames:'[name]-[hash]', legalComments:'eof', define:{__BUILD_ID__:JSON.stringify(buildID)}};
 const shims = {name:'browser-only',setup(build){
   build.onResolve({filter:/^js-beautify$/},()=>({path:'beautify',namespace:'shim'}));
