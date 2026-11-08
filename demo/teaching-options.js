@@ -3,7 +3,7 @@ const teachingOptions = {
   explanations: true,
   libraryModel: true,
   upgradeDisclosure: true,
-  declassification: false,
+  declassification: true,
   fixedTimers: false,
 };
 

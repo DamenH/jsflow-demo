@@ -11,6 +11,7 @@ import { ToString } from '/opt/jsflow/out/Conversion/ToString';
 import { ToNumber } from '/opt/jsflow/out/Conversion/ToNumber';
 import { Task } from '/opt/jsflow/out/Engine/Task';
 import { Result } from '/opt/jsflow/out/Result';
+import { teachingOptions } from '../teaching-options.js';
 
 const send = message => self.postMessage(message);
 const boundaryTypes = new Set(['VariableDeclaration','ExpressionStatement','IfStatement','WhileStatement','DoWhileStatement','ForStatement','ForInStatement','ReturnStatement','ThrowStatement','TryStatement','SwitchStatement','WithStatement','BreakStatement','ContinueStatement','DebuggerStatement']);
@@ -166,7 +167,7 @@ self.onmessage = ({data}) => {
         } catch (error) { complete(error); }
       }
       try {
-        new Function('lbl','publicOutput','checkpoint','print','setTimeout',data.code)(value=>value,value=>append(result,value),()=>{},value=>append(log,value),schedule);
+        new Function('lbl','publicOutput','checkpoint','print','setTimeout','declassify',data.code)(value=>value,value=>append(result,value),()=>{},value=>append(log,value),schedule,teachingOptions.declassification ? value=>value : undefined);
         setTimeout(drain,0);
       } catch (error) { complete(error); }
       return;

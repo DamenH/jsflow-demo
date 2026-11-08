@@ -34,6 +34,17 @@ if (teachingOptions.libraryModel) {
   });
 }
 
+if (teachingOptions.declassification) {
+  scenarios.push({
+    id: 'declassified',
+    title: 'Explicitly remove a value’s protection',
+    tag: 'Advanced: declassification',
+    question: 'What happens when the program can declassify its own data?',
+    lesson: 'The artifact exposes declassify without an authorization check. Here it changes the released value’s label to public, so our public sink accepts it. This deliberately exercises release authority; it is not evidence that the original secret was public.',
+    body: "var released = declassify(token);\npublicOutput(released);",
+  });
+}
+
 function program(scenario, token, isMember) {
   return 'var token = lbl(' + JSON.stringify(token) + ');\n' +
     'var isMember = lbl(' + JSON.stringify(isMember) + ');\n' +

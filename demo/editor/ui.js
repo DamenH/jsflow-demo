@@ -21,7 +21,7 @@ self.MonacoEnvironment = {getWorker:(_,label)=>createWorker(['typescript','javas
 const $ = id=>document.getElementById(id);
 for (const id of ['lesson','policy-note','teaching-details']) $(id).hidden=!teachingOptions.explanations;
 typescript.javascriptDefaults.setCompilerOptions({target:typescript.ScriptTarget.ES5,allowJs:true,checkJs:true,noEmit:true});
-typescript.javascriptDefaults.addExtraLib('declare function lbl<T>(value: T, ...labels: string[]): T;\ndeclare function publicOutput(value: any): void;\ndeclare function checkpoint(name: string, value: any): void;\ndeclare function print(value: any): void;\ndeclare function setTimeout(callback: (...args: any[]) => void, delay?: number, ...args: any[]): number;','ts:jsflow.d.ts');
+typescript.javascriptDefaults.addExtraLib('declare function lbl<T>(value: T, ...labels: string[]): T;\ndeclare function declassify<T>(value: T): T;\ndeclare function publicOutput(value: any): void;\ndeclare function checkpoint(name: string, value: any): void;\ndeclare function print(value: any): void;\ndeclare function setTimeout(callback: (...args: any[]) => void, delay?: number, ...args: any[]): number;','ts:jsflow.d.ts');
 monaco.editor.defineTheme('plain',{base:'vs',inherit:true,rules:[],colors:{'editor.background':'#fafafa','editor.lineHighlightBackground':'#f0f2f4','editorLineNumber.foreground':'#8a8f97','editorGutter.background':'#fafafa'}});
 typescript.javascriptDefaults.setEagerModelSync(true);
 const model=monaco.editor.createModel('','javascript',monaco.Uri.parse('file:///editor.js'));
@@ -58,6 +58,7 @@ function invalidate(){terminate();if(nativeWorker)nativeWorker.terminate();clear
 function loadExample(reset=false){
  if(!reset)drafts.set(selected,{code:editor.getValue(),breakpoints:[...breakpoints],dirty});
  selected=$('examples').value;const draft=reset?null:drafts.get(selected);
+ $('declassification-note').hidden=selected!=='declassified'||!teachingOptions.declassification;
  terminate();updating=true;editor.setValue(draft?draft.code:template(selected));updating=false;
  breakpoints=new Set(draft?draft.breakpoints:[]);dirty=draft?.dirty||false;invalidate();setText('lesson',scenarios.find(item=>item.id===selected).lesson);setText('file-state',dirty?'Modified':'Example');start(true);
 }
