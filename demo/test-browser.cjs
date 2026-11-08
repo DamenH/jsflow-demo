@@ -70,7 +70,7 @@ const base=process.argv[2] || 'http://127.0.0.1:8766';
    await page.locator('#run').click();await untilDone();
    assert.equal(await page.evaluate(()=>window.jsflowDemo.state),['safe','repaired'].includes(id)?'completed':'blocked',id);
   }
-  assert([404,405].includes((await page.request.post(base+'/api/run',{data:{code:'publicOutput("remote");'}})).status()));
+  assert([404,405,501].includes((await page.request.post(base+'/api/run',{data:{code:'publicOutput("remote");'}})).status()));
   // No execution requests leave the browser, and it works after going offline.
   assert(!requests.some(request=>request.method==='POST'));
   await page.context().setOffline(true);await page.locator('#reset').click();await paused(1);

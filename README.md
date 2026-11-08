@@ -5,9 +5,14 @@ provides an editable ES5 source view, real statement stepping, breakpoints, and
 hover inspection of variable values, security labels, and execution context.
 
 The authors' interpreter runs in a browser worker. The site has no execution
-backend and never sends edited programs to a server. Nine examples include
+backend and never sends edited programs to a server. Twelve examples include
 explicit and implicit flows, conservative rejection, callbacks, and queued
 callback delivery through an inline `defer` helper and a bounded timer adapter.
+The added examples cover library control flow through a getter, disclosure after
+prelabeling, and the artifact's exposed declassification operation. Visible notes
+explain the source and sink policy; comparison and diagnostic controls are below
+the editor. See [ROLLBACK.md](ROLLBACK.md) for independent feature switches and
+the exact baseline revision.
 
 ## Build
 
@@ -30,7 +35,7 @@ licensed. Built assets include JSFlow and Monaco license files.
 
 `publicOutput` is a demo sink that checks the value and effective context labels.
 `print` is a trusted diagnostic. The examples define `defer(callback, value)`
-inline, choosing a random 500–1499 ms delay using JSFlow's Math API and calling
+inline, using a fixed 1000 ms presentation delay and calling
 `setTimeout`. A timer host adapter waits in real time, then resumes the actual
 interpreted callback. It retains scheduling context, delay/function labels, and
 callback argument labels. Delays are clamped to 0–2000 ms; timers accept function
@@ -38,6 +43,13 @@ callbacks and optional arguments, without cancellation or string callbacks.
 The interpreted language is non-strict ES5; promises and async/await are not
 provided. This is a teaching API model, not a complete browser event loop or a
 guarantee about timing channels.
+Set `fixedTimers` to `false` to restore random 500–1499 ms delays, or edit the
+helper in the browser to explore another delay expression.
+
+The interpreter already exposes `declassify` without an authorization check. The
+advanced example demonstrates that operation; the demo does not grant a new
+release permission or change upstream enforcement. The ordinary-JavaScript
+comparison treats `lbl` and, when enabled, `declassify` as identity helpers.
 
 Static hosting cannot attach custom response headers to individual workers, so
 workers start through Blob bootstraps and inherit the page's Content Security
@@ -53,6 +65,11 @@ Chromium. Set `PLAYWRIGHT_MODULE` to its installed module path when needed:
 ```sh
 node demo/test-browser.cjs http://localhost:8000/
 node demo/test-callbacks.cjs http://localhost:8000/
+node demo/test-teaching-options.cjs
+node demo/test-teaching-ui.cjs http://localhost:8000/
+node demo/test-library-model.cjs http://localhost:8000/
+node demo/test-upgrade-disclosure.cjs http://localhost:8000/
+node demo/test-declassification.cjs http://localhost:8000/
 ```
 
 The original Docker CLI suite remains available through `./demo.sh build` and

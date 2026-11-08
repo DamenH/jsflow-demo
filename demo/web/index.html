@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:; connect-src 'none'; font-src 'self' data:; object-src 'none'; base-uri 'self'">
 <title>JSFlow debugger</title>
-<link rel="stylesheet" href="./style.css"><link rel="stylesheet" href="./assets/app.css?v=__BUILD_ID__">
+<link rel="stylesheet" href="./style.css?v=__BUILD_ID__"><link rel="stylesheet" href="./assets/app.css?v=__BUILD_ID__">
 <script src="./assets/app.js?v=__BUILD_ID__" type="module"></script>
 </head>
 <body class="present">
@@ -27,7 +27,7 @@
 <div id="teaching-details" hidden>
 <details><summary>Diagnostic print output</summary><pre id="diagnostics">No diagnostic output.</pre><p>Trusted debug output may display secrets.</p></details>
 <details><summary>Breakpoints</summary><p id="breakpoint-list">None.</p><button id="clear-breakpoints">Clear breakpoints</button><p>Stops before an executable statement on that line. Blank lines and comments do not pause execution.</p></details>
-<details><summary>Ordinary JavaScript comparison</summary><p>Runs the edited source in a separate browser worker, with <code>lbl</code> as identity and no information-flow checks. When the declassification addition is enabled, <code>declassify</code> is also an identity helper in this comparison.</p><button id="compare">Run comparison</button><pre id="native-output">Not run.</pre></details>
+<details><summary>Ordinary JavaScript comparison</summary><p>Runs the edited source in a separate browser worker, with <code>lbl</code> as identity and no information-flow checks.<span id="declass-comparison" hidden> <code>declassify</code> is also an identity helper in this comparison.</span></p><button id="compare">Run comparison</button><pre id="native-output">Not run.</pre></details>
 <footer><span>Actual JSFlow execution in your browser. Source stays in this tab.</span><span id="steps">0 internal steps</span><a href="https://github.com/jsflow/jsflow" target="_blank" rel="noreferrer">Interpreter source</a></footer>
 <details class="about"><summary>About this debugger</summary><p>The unchanged authors’ JSFlow interpreter (2021 commit) runs in a Web Worker. Step advances its real work list to the next statement; breakpoints pause before that statement executes, including on repeated loop iterations. The variables and hover data come from the current JSFlow environment. Object previews read internal data descriptors and do not invoke getters. This is a teaching adapter, not a reproduction of the 2016 paper’s evaluation.</p><p><code>publicOutput(value)</code> is our public sink: it rejects secret values or a secret execution context. <code>print(value)</code> is trusted diagnostic output. The interpreter supports non-strict ES5; browser DOM, network and Node modules are unavailable to interpreted programs. The server serves static files only. The examples define <code>defer</code> inline using a delay and <code>setTimeout</code>. A limited timer host adapter waits in real time, then resumes interpreted callbacks while preserving argument labels and the scheduling context. Delays are clamped to 0–2000 ms, callbacks are limited to functions, and cancellation is not provided. Promises and async/await are not provided. Long runs can be stopped; workers have execution and output limits. Some synchronous built-in calls cannot pause internally.</p></details>
 </div>

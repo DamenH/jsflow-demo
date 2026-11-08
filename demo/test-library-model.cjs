@@ -10,11 +10,12 @@ const assert = require('node:assert/strict');
     await page.locator('#examples').selectOption('library-model');
     await page.waitForFunction(() => window.jsflowDemo.state === 'paused');
     const source = await page.evaluate(() => window.jsflowDemo.editor.getValue());
-    const line = source.split('\n').findIndex(text => text.includes('visited = true')) + 1;
+    // Library calls run synchronously; pause before every, then step over it.
+    const line = source.split('\n').findIndex(text => text.includes('values.every(')) + 1;
     await page.evaluate(line => window.jsflowDemo.setBreakpoints([line]), line);
     await page.locator('#continue').click();
     await page.waitForFunction(line => window.jsflowDemo.state === 'paused' && document.querySelector('#status').textContent.includes('line ' + line + ' ·'), line);
-    assert.equal(await page.locator('#pc').innerText(), '<T>');
+    assert.equal(await page.locator('#pc').innerText(), '<>');
     const visited = await page.locator('#variables tr').evaluateAll(rows => {
       const row = rows.find(row => row.cells[0]?.textContent === 'visited');
       return { value: row.cells[1].textContent, label: row.cells[2].textContent };
@@ -22,6 +23,7 @@ const assert = require('node:assert/strict');
     assert.deepEqual(visited, { value: 'false', label: '<>' });
     await page.locator('#step').click();
     await page.waitForFunction(() => window.jsflowDemo.state === 'blocked');
+    assert.equal(await page.locator('#pc').innerText(), '<T>');
     assert.match(await page.locator('#error').innerText(), /security context <T>.*existing value label <>/);
     assert.equal(await page.locator('#public-output').innerText(), 'No output.');
 

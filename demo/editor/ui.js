@@ -20,6 +20,7 @@ function createWorker(name) {
 self.MonacoEnvironment = {getWorker:(_,label)=>createWorker(['typescript','javascript'].includes(label)?'ts':'editor')};
 const $ = id=>document.getElementById(id);
 for (const id of ['lesson','policy-note','teaching-details']) $(id).hidden=!teachingOptions.explanations;
+$('declass-comparison').hidden=!teachingOptions.declassification;
 typescript.javascriptDefaults.setCompilerOptions({target:typescript.ScriptTarget.ES5,allowJs:true,checkJs:true,noEmit:true});
 typescript.javascriptDefaults.addExtraLib('declare function lbl<T>(value: T, ...labels: string[]): T;\ndeclare function declassify<T>(value: T): T;\ndeclare function publicOutput(value: any): void;\ndeclare function checkpoint(name: string, value: any): void;\ndeclare function print(value: any): void;\ndeclare function setTimeout(callback: (...args: any[]) => void, delay?: number, ...args: any[]): number;','ts:jsflow.d.ts');
 monaco.editor.defineTheme('plain',{base:'vs',inherit:true,rules:[],colors:{'editor.background':'#fafafa','editor.lineHighlightBackground':'#f0f2f4','editorLineNumber.foreground':'#8a8f97','editorGutter.background':'#fafafa'}});

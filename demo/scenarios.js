@@ -32,7 +32,7 @@ if (teachingOptions.libraryModel) {
     title: 'A library decides which getter runs',
     tag: 'Library control flow',
     question: 'Can a library reveal a secret through a getter side effect?',
-    lesson: 'Array.every stops at the first false result. A secret true result causes it to read the next element, invoking a getter under secret control. JSFlow rejects the getter’s write to the public visited variable. The callback’s return value affects more than the library’s final result.',
+    lesson: 'Array.every stops at the first false result. A secret true result causes it to read the next element, invoking a getter under secret control. JSFlow rejects the getter’s write to the public visited variable. Step over the every call to observe the check; this synchronous library call cannot pause internally.',
     body: "var visited = false;\nvar values = [isMember, true];\nObject.defineProperty(values, '1', {\n    get: function nextValue() {\n        visited = true;\n        return true;\n    }\n});\nvalues.every(function keepGoing(value) {\n    return value;\n});\npublicOutput(visited);",
   });
 }
