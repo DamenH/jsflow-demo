@@ -5,11 +5,11 @@ provides an editable ES5 source view, real statement stepping, breakpoints, and
 hover inspection of variable values, security labels, and execution context.
 
 The authors' interpreter runs in a browser worker. The site has no execution
-backend and never sends edited programs to a server. Twelve examples include
+backend and never sends edited programs to a server. Eleven examples include
 explicit and implicit flows, conservative rejection, callbacks, and queued
 callback delivery through an inline `defer` helper and a bounded timer adapter.
-The added examples cover library control flow through a getter, disclosure after
-prelabeling, and the artifact's exposed declassification operation. Visible notes
+The added examples cover library control flow through a getter and disclosure
+after prelabeling. Visible notes
 explain the source and sink policy; comparison and diagnostic controls are below
 the editor. See [ROLLBACK.md](ROLLBACK.md) for independent feature switches and
 the exact baseline revision.
@@ -46,11 +46,6 @@ guarantee about timing channels.
 Set `fixedTimers` to `false` to restore random 500–1499 ms delays, or edit the
 helper in the browser to explore another delay expression.
 
-The interpreter already exposes `declassify` without an authorization check. The
-advanced example demonstrates that operation; the demo does not grant a new
-release permission or change upstream enforcement. The ordinary-JavaScript
-comparison treats `lbl` and, when enabled, `declassify` as identity helpers.
-
 Static hosting cannot attach custom response headers to individual workers, so
 workers start through Blob bootstraps and inherit the page's Content Security
 Policy. Network connections are disabled. The policy permits dynamic evaluation
@@ -69,8 +64,10 @@ node demo/test-teaching-options.cjs
 node demo/test-teaching-ui.cjs http://localhost:8000/
 node demo/test-library-model.cjs http://localhost:8000/
 node demo/test-upgrade-disclosure.cjs http://localhost:8000/
-node demo/test-declassification.cjs http://localhost:8000/
 ```
+
+The optional declassification example is disabled. Its check in
+`demo/test-declassification.cjs` applies only when that feature is enabled.
 
 The original Docker CLI suite remains available through `./demo.sh build` and
 `./demo.sh`. This repository contains only the demo, build inputs, tests and
