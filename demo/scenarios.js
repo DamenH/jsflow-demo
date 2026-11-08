@@ -29,11 +29,12 @@ if (teachingOptions.upgradeDisclosure) {
 if (teachingOptions.libraryModel) {
   scenarios.splice(scenarios.findIndex(scenario => scenario.id === 'callback') + 1, 0, {
     id: 'library-model',
+    standalone: true,
     title: 'A library decides which getter runs',
     tag: 'Library control flow',
     question: 'Can a library reveal a secret through a getter side effect?',
     lesson: 'Array.every stops at the first false result. A secret true result causes it to read the next element, invoking a getter under secret control. JSFlow rejects the getter’s write to the public visited variable. Step over the every call to observe the check; this synchronous library call cannot pause internally.',
-    body: "var visited = false;\nvar values = [isMember, true];\nObject.defineProperty(values, '1', {\n    get: function nextValue() {\n        visited = true;\n        return true;\n    }\n});\nvalues.every(function keepGoing(value) {\n    return value;\n});\npublicOutput(visited);",
+    body: "var visited = false;\nvar values = [lbl(true), true];\nObject.defineProperty(values, '1', {\n    get: function () {\n        visited = true;\n        return true;\n    }\n});\nvalues.every(function (value) { return value; });\npublicOutput(visited);",
   });
 }
 
@@ -49,6 +50,7 @@ if (teachingOptions.declassification) {
 }
 
 function program(scenario, token, isMember) {
+  if (scenario.standalone) return scenario.body;
   return 'var token = lbl(' + JSON.stringify(token) + ');\n' +
     'var isMember = lbl(' + JSON.stringify(isMember) + ');\n' +
     "checkpoint('Read private token', token);\n" + scenario.body;
