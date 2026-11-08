@@ -1,4 +1,5 @@
 // ES5 teaching templates. User inputs are inserted only as JSON literals.
+const { teachingOptions } = require('./teaching-options');
 const scenarios = [
   { id: 'direct', title: 'Steal the token', tag: 'Explicit flow', question: 'Can an analytics script publish a private token?', lesson: 'Copying a secret into a public message preserves its secret label.', body: "var message = 'token=' + token;\ncheckpoint('Analytics prepares a message', message);\npublicOutput(message);" },
   { id: 'encoded', title: 'Hide it in an encoding', tag: 'API propagation', question: 'Does encoding the token make it safe to send?', lesson: 'encodeURIComponent changes the text, but the value still depends on the secret.', body: "var message = encodeURIComponent(token);\ncheckpoint('Encode the private token', message);\npublicOutput(message);" },
@@ -11,6 +12,17 @@ const scenarios = [
   {"id": "deferred-control", "title": "Schedule under secret control", "tag": "Timer implicit flow", "question": "Can scheduling a callback reveal one private bit?", "lesson": "The inline helper uses a timer. The timer model retains the scheduling context, so a callback scheduled under secret control cannot publish a public constant.", "body": "function defer(callback, value) {\n    var delay = 500 + Math.floor(Math.random() * 1000);\n    setTimeout(function () {\n        callback(value);\n    }, delay);\n}\nif (isMember) {\n    defer(function announce() {\n        publicOutput('Member callback ran');\n    });\n}\npublicOutput('Main script finished');"}
 
 ];
+if (teachingOptions.libraryModel) {
+  scenarios.splice(scenarios.findIndex(scenario => scenario.id === 'callback') + 1, 0, {
+    id: 'library-model',
+    title: 'A library decides which getter runs',
+    tag: 'Library control flow',
+    question: 'Can a library reveal a secret through a getter side effect?',
+    lesson: 'Array.every stops at the first false result. A secret true result causes it to read the next element, invoking a getter under secret control. JSFlow rejects the getter’s write to the public visited variable. The callback’s return value affects more than the library’s final result.',
+    body: "var visited = false;\nvar values = [isMember, true];\nObject.defineProperty(values, '1', {\n    get: function nextValue() {\n        visited = true;\n        return true;\n    }\n});\nvalues.every(function keepGoing(value) {\n    return value;\n});\npublicOutput(visited);",
+  });
+}
+
 function program(scenario, token, isMember) {
   return 'var token = lbl(' + JSON.stringify(token) + ');\n' +
     'var isMember = lbl(' + JSON.stringify(isMember) + ');\n' +

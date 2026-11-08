@@ -1,7 +1,7 @@
 // Rebuild and deploy after changing these switches. See ROLLBACK.md.
 const teachingOptions = {
   explanations: true,
-  libraryModel: false,
+  libraryModel: true,
   upgradeDisclosure: false,
   declassification: false,
   fixedTimers: false,
