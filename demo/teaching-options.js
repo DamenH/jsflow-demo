@@ -4,7 +4,7 @@ const teachingOptions = {
   libraryModel: true,
   upgradeDisclosure: true,
   declassification: true,
-  fixedTimers: false,
+  fixedTimers: true,
 };
 
 module.exports = { teachingOptions };

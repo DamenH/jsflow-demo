@@ -1,5 +1,6 @@
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const assert=require('node:assert/strict');
+const {teachingOptions}=require('./teaching-options');
 (async()=>{const browser=await chromium.launch();try{
  const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(process.argv[2] || 'http://127.0.0.1:8766');
@@ -14,7 +15,7 @@ const assert=require('node:assert/strict');
  await select('deferred');
  assert.match(await page.evaluate(()=>window.jsflowDemo.editor.getValue()),/function defer\(callback, value\)/);
  const scheduleLine=await breakpoint('setTimeout(function');await page.locator('#continue').click();await paused(scheduleLine);
- const delay=await variable('delay');assert.equal(delay.label,'<>');assert(Number(delay.value)>=500&&Number(delay.value)<1500);
+ const delay=await variable('delay');assert.equal(delay.label,'<>');if(teachingOptions.fixedTimers)assert.equal(Number(delay.value),1000);else assert(Number(delay.value)>=500&&Number(delay.value)<1500);
  const laterLine=await breakpoint('publicOutput(value)');const started=Date.now();await page.locator('#continue').click();await paused(laterLine);
  assert(Date.now()-started>=Number(delay.value)-40,'Callback ran before its chosen delay');
  assert.equal(await page.locator('#public-output').innerText(),'Main script finished');assert.equal((await variable('value')).label,'<T>');assert.equal(await page.locator('#pc').innerText(),'<>');assert.match(await page.locator('#scope-info').innerText(),/callback #1/);
@@ -26,5 +27,5 @@ const assert=require('node:assert/strict');
  await edit('setTimeout(function slow() { publicOutput("slow"); }, 150);\nsetTimeout(function fast() { publicOutput("fast"); }, 10);\npublicOutput("main");');await page.locator('#continue').click();await done();assert.equal(await page.locator('#public-output').innerText(),'main\nfast\nslow');
  await edit('var delay = lbl(50);\nsetTimeout(function () { publicOutput("constant"); }, delay);');await page.locator('#continue').click();await done();assert.equal(await page.evaluate(()=>window.jsflowDemo.state),'blocked');assert.match(await page.locator('#error').innerText(),/context <T>/);
  await edit('setTimeout(function () { publicOutput("too late"); }, 1500);');await page.locator('#continue').click();await page.waitForFunction(()=>window.jsflowDemo.state==='waiting');assert.equal(await page.locator('#public-output').innerText(),'No output.');assert(await page.locator('#step').isDisabled());await page.locator('#stop').click();assert.equal(await page.locator('#status').innerText(),'Stopped');
- assert.deepEqual(errors,[]);console.log('PASS inline helper, random delay bounds and real elapsed wait, callback labels and breakpoints, scheduling context, secret delay, timer order, allowed private work, native comparison, Stop while waiting.');
+ assert.deepEqual(errors,[]);console.log('PASS inline helper, configured delay and real elapsed wait, callback labels and breakpoints, scheduling context, secret delay, timer order, allowed private work, native comparison, Stop while waiting.');
 }finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});

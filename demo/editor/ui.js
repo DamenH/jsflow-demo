@@ -59,6 +59,7 @@ function loadExample(reset=false){
  if(!reset)drafts.set(selected,{code:editor.getValue(),breakpoints:[...breakpoints],dirty});
  selected=$('examples').value;const draft=reset?null:drafts.get(selected);
  $('declassification-note').hidden=selected!=='declassified'||!teachingOptions.declassification;
+ $('timer-note').hidden=!teachingOptions.fixedTimers||!['deferred','deferred-control'].includes(selected);
  terminate();updating=true;editor.setValue(draft?draft.code:template(selected));updating=false;
  breakpoints=new Set(draft?draft.breakpoints:[]);dirty=draft?.dirty||false;invalidate();setText('lesson',scenarios.find(item=>item.id===selected).lesson);setText('file-state',dirty?'Modified':'Example');start(true);
 }
