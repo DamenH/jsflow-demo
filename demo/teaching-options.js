@@ -2,7 +2,7 @@
 const teachingOptions = {
   explanations: true,
   libraryModel: true,
-  upgradeDisclosure: true,
+  upgradeDisclosure: false,
   declassification: false,
   fixedTimers: true,
 };

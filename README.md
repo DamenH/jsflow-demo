@@ -5,11 +5,10 @@ provides an editable ES5 source view, real statement stepping, breakpoints, and
 hover inspection of variable values, security labels, and execution context.
 
 The authors' interpreter runs in a browser worker. The site has no execution
-backend and never sends edited programs to a server. Eleven examples include
+backend and never sends edited programs to a server. Ten examples include
 explicit and implicit flows, conservative rejection, callbacks, and queued
 callback delivery through an inline `defer` helper and a bounded timer adapter.
-The added examples cover library control flow through a getter and disclosure
-after prelabeling. Visible notes
+The library example covers control flow through a getter. Visible notes
 explain the source and sink policy; comparison and diagnostic controls are below
 the editor. See [ROLLBACK.md](ROLLBACK.md) for independent feature switches and
 the exact baseline revision.
@@ -63,11 +62,11 @@ node demo/test-callbacks.cjs http://localhost:8000/
 node demo/test-teaching-options.cjs
 node demo/test-teaching-ui.cjs http://localhost:8000/
 node demo/test-library-model.cjs http://localhost:8000/
-node demo/test-upgrade-disclosure.cjs http://localhost:8000/
 ```
 
-The optional declassification example is disabled. Its check in
-`demo/test-declassification.cjs` applies only when that feature is enabled.
+The upgrade-and-disclosure and declassification examples are disabled. Their
+checks in `demo/test-upgrade-disclosure.cjs` and
+`demo/test-declassification.cjs` apply when their corresponding feature is enabled.
 
 The original Docker CLI suite remains available through `./demo.sh build` and
 `./demo.sh`. This repository contains only the demo, build inputs, tests and

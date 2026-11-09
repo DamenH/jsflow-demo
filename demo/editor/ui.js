@@ -44,7 +44,7 @@ function hoverInfo(model,position){
 }
 monaco.languages.registerHoverProvider('javascript',{provideHover:hoverInfo});
 function template(id){return program(scenarios.find(item=>item.id===id),'polar/otter?key=42',true).split('\n').filter(line=>!line.includes('checkpoint(')).join('\n');}
-for(const scenario of scenarios){const option=document.createElement('option');option.value=scenario.id;option.textContent=scenario.tag+' — '+scenario.title;$('examples').append(option);}
+for(const [index,scenario] of scenarios.entries()){const option=document.createElement('option');option.value=scenario.id;option.textContent=(index+1)+'. '+scenario.tag+' — '+scenario.title;$('examples').append(option);}
 function setText(id,text){$(id).textContent=text;}
 function buttons(){const paused=state==='paused',running=state==='running'||state==='waiting';$('continue').disabled=!paused;$('stop').disabled=!worker;$('step').disabled=running;$('run').disabled=running;$('debug').disabled=running;}
 function message(text,tone=''){setText('status',text);$('status').className=tone;}
